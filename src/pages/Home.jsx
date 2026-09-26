@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import HorseLogo from '../components/HorseLogo';
+import logoDark from '../imagenes/kamelia-dark.png';
 import SongRequestModal from '../components/SongRequestModal';
 
 const EMPTY_FORM = {
@@ -92,7 +92,11 @@ export default function Home() {
             </div>
           </div>
           <div className="animate-floaty">
-            <HorseLogo className="w-40 h-40 md:w-52 md:h-52" />
+            <img
+              src={logoDark}
+              alt="La Kamelia"
+              className="w-40 h-40 md:w-52 md:h-52 object-contain"
+            />
           </div>
         </div>
       </section>

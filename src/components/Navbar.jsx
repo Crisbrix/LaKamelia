@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import HorseLogo from './HorseLogo';
+import logoLight from '../imagenes/kamelia-light.png';
 import { useAuth } from '../context/AuthContext';
 
 const linkClass = ({ isActive }) =>
@@ -22,7 +22,11 @@ export default function Navbar() {
     <header className="wood-panel border-b-4 border-ink sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
         <Link to="/" className="flex items-center gap-3 group">
-          <HorseLogo className="w-11 h-11 animate-swing" />
+          <img
+            src={logoLight}
+            alt="Rancho Criadero La Kamelia"
+            className="w-11 h-11 object-contain animate-swing"
+          />
           <div className="leading-tight">
             <p className="font-display text-lg md:text-xl text-parchment">
               Rancho Criadero La Kamelia
