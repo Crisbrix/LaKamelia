@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import CowLogo from '../components/CowLogo';
+import HorseLogo from '../components/HorseLogo';
 import SongRequestModal from '../components/SongRequestModal';
 
 const EMPTY_FORM = {
@@ -92,7 +92,7 @@ export default function Home() {
             </div>
           </div>
           <div className="animate-floaty">
-            <CowLogo className="w-40 h-40 md:w-52 md:h-52" />
+            <HorseLogo className="w-40 h-40 md:w-52 md:h-52" />
           </div>
         </div>
       </section>

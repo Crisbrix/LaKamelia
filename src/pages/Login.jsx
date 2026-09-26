@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import CowLogo from '../components/CowLogo';
+import HorseLogo from '../components/HorseLogo';
 
 export default function Login() {
   const { login } = useAuth();
@@ -33,7 +33,7 @@ export default function Login() {
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="card-rustic p-7 animate-pop">
         <div className="flex flex-col items-center text-center mb-6">
-          <CowLogo className="w-24 h-24" />
+          <HorseLogo className="w-24 h-24" />
           <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-bark-soft">
             Rancho Criadero La Kamelia · Orgullosamente colombiano
           </p>
