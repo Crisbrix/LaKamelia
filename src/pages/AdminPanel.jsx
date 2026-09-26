@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
 import MessageCard from '../components/MessageCard';
+import UserManager from '../components/UserManager';
 
 const POLL_MS = 5000;
 
 export default function AdminPanel() {
   const [messages, setMessages] = useState([]);
   const [stats, setStats] = useState(null);
+  const [tab, setTab] = useState('mensajes');
   const [statusFilter, setStatusFilter] = useState('pendiente');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -92,7 +94,31 @@ export default function AdminPanel() {
         </span>
       </div>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <nav className="flex flex-wrap gap-2 mb-6" aria-label="Secciones del panel">
+        {[
+          { id: 'mensajes', label: 'Cola de mensajes' },
+          { id: 'usuarios', label: 'Usuarios' },
+        ].map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setTab(item.id)}
+            className={`px-4 py-2 rounded-full font-extrabold text-sm uppercase tracking-wide border-2 transition ${
+              tab === item.id
+                ? 'bg-spot text-ink border-ink'
+                : 'bg-transparent text-bark-soft border-bark/40 hover:bg-hay'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === 'usuarios' ? (
+        <UserManager />
+      ) : (
+        <>
+          <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatCard label="Total" value={stats?.total ?? '—'} tone="bg-hay" />
         <StatCard label="Pendientes" value={stats?.pendiente ?? '—'} tone="bg-spot" />
         <StatCard label="Leidos" value={stats?.leido ?? '—'} tone="bg-sky" />
@@ -177,6 +203,8 @@ export default function AdminPanel() {
             />
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );

@@ -70,4 +70,9 @@ export const api = {
     request(`/messages/${id}/status`, { method: 'PATCH', auth: true, body: { status } }),
   markAsRead: (id) => request(`/messages/${id}/read`, { method: 'PATCH', auth: true }),
   deleteMessage: (id) => request(`/messages/${id}`, { method: 'DELETE', auth: true }),
+
+  listUsers: () => request('/users', { auth: true }),
+  createUser: (payload) => request('/users', { method: 'POST', auth: true, body: payload }),
+  updateUser: (id, payload) => request(`/users/${id}`, { method: 'PATCH', auth: true, body: payload }),
+  deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE', auth: true }),
 };
