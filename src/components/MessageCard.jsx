@@ -49,6 +49,11 @@ export default function MessageCard({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {message.table_number && (
+            <span className="text-[11px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink bg-hay text-ink">
+              Mesa {message.table_number}
+            </span>
+          )}
           <PriorityBadge priority={message.priority} size="sm" />
           <span
             className={`text-[11px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink ${

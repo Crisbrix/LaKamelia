@@ -6,6 +6,7 @@ import SongRequestModal from '../components/SongRequestModal';
 const EMPTY_FORM = {
   client_name: '',
   honoree_name: '',
+  table_number: '',
   message_text: '',
   song_request_url: '',
 };
@@ -118,7 +119,7 @@ export default function Home() {
                 <strong>{sent.honoree_name}</strong> ya esta en la cola de mensajes.
               </p>
               <p className="text-sm text-bark-soft mt-1">
-                Pronto podras escucharlo al aire. Gracias por escribirnos.
+                Mesa {sent.table_number} · Pronto podras escucharlo al aire. Gracias por escribirnos.
               </p>
               <button className="btn btn-primary mt-4" onClick={() => setSent(null)}>
                 Enviar otro saludo
@@ -153,6 +154,21 @@ export default function Home() {
                     required
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="field-label" htmlFor="table_number">
+                  Numero de mesa
+                </label>
+                <input
+                  id="table_number"
+                  className="field"
+                  placeholder="Ej: 12"
+                  maxLength={20}
+                  value={form.table_number}
+                  onChange={(event) => update('table_number', event.target.value)}
+                  required
+                />
               </div>
 
               <div>
@@ -256,7 +272,10 @@ export default function Home() {
                 {recent.map((item) => (
                   <li key={item.id} className="border-2 border-bark/40 rounded-xl p-3 bg-parchment">
                     <p className="font-display text-bark">{item.honoree_name}</p>
-                    <p className="text-xs text-bark-soft">De {item.client_name}</p>
+                    <p className="text-xs text-bark-soft">
+                      De {item.client_name}
+                      {item.table_number ? ` · Mesa ${item.table_number}` : ''}
+                    </p>
                     <p className="text-sm mt-1 line-clamp-3">{item.message_text}</p>
                   </li>
                 ))}
