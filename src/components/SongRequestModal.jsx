@@ -1,65 +1,46 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { api } from '../api/client';
 
-function extractYouTubeId(url) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, '');
+const EMPTY = { song_name: '', artist: '', table_number: '' };
 
-    if (host === 'youtu.be') return parsed.pathname.slice(1).split('/')[0] || null;
-    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
-      if (parsed.pathname === '/watch') return parsed.searchParams.get('v');
-      const match = parsed.pathname.match(/^\/(shorts|embed|live|v)\/([^/?#]+)/);
-      if (match) return match[2];
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export default function SongRequestModal({ open, onClose, onAttach }) {
-  const [title, setTitle] = useState('');
-  const [url, setUrl] = useState('');
+export default function SongRequestModal({ open, onClose }) {
+  const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState('');
-
-  const videoId = useMemo(() => (url ? extractYouTubeId(url.trim()) : null), [url]);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(null);
 
   if (!open) return null;
 
-  function openYouTubeSearch() {
-    const query = title.trim() || url.trim();
-    if (!query) {
-      setError('Escribe el nombre de la cancion antes de buscar en YouTube.');
-      return;
-    }
-    setError('');
-    window.open(
-      `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
+  function update(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function handleAttach() {
-    const cleanUrl = url.trim();
-    if (!cleanUrl) {
-      setError('Pega el enlace del video de YouTube que copiaste.');
-      return;
-    }
-    if (!extractYouTubeId(cleanUrl)) {
-      setError('Ese enlace no parece un video de YouTube valido.');
-      return;
-    }
+  function close() {
+    setSent(null);
     setError('');
-    onAttach({ url: cleanUrl, title: title.trim() });
-    setTitle('');
-    setUrl('');
+    setForm(EMPTY);
+    onClose();
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError('');
+    setSending(true);
+    try {
+      const data = await api.createSongRequest(form);
+      setSent(data.song_request);
+      setForm(EMPTY);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4"
-      onClick={onClose}
+      onClick={close}
       role="dialog"
       aria-modal="true"
     >
@@ -67,71 +48,103 @@ export default function SongRequestModal({ open, onClose, onAttach }) {
         className="card-rustic w-full max-w-lg p-6 animate-pop max-h-[90vh] overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h2 className="font-display text-2xl text-bark">Pedir una cancion</h2>
-            <p className="text-sm text-bark-soft">
-              Busca el tema en YouTube, copia el enlace y adjuntalo a tu saludo.
+        {sent ? (
+          <div className="text-center">
+            <p className="font-display text-2xl text-pasture-dark">Cancion enviada a la cabina</p>
+            <p className="mt-3 font-display text-xl text-bark">{sent.song_name}</p>
+            <p className="text-bark-soft">{sent.artist}</p>
+            <p className="mt-2 inline-block text-xs font-display uppercase tracking-widest bg-spot text-ink border-2 border-ink rounded-full px-3 py-1">
+              Mesa {sent.table_number}
             </p>
+            <p className="mt-4 text-sm text-bark-soft">
+              Ya esta en la cola del presentador. Gracias por tu peticion.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center mt-5">
+              <button className="btn btn-ghost" onClick={close} type="button">
+                Cerrar
+              </button>
+              <button className="btn btn-green" onClick={() => setSent(null)} type="button">
+                Pedir otra cancion
+              </button>
+            </div>
           </div>
-          <button className="btn btn-ghost !py-1 !px-3" onClick={onClose} aria-label="Cerrar">
-            X
-          </button>
-        </div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 className="font-display text-2xl text-bark">Pedir una cancion</h2>
+                <p className="text-sm text-bark-soft">
+                  Dinos que suena y desde que mesa la pides. Nuestro locutor la pone al aire.
+                </p>
+              </div>
+              <button className="btn btn-ghost !py-1 !px-3" onClick={close} aria-label="Cerrar" type="button">
+                X
+              </button>
+            </div>
 
-        <label className="field-label" htmlFor="song-title">
-          1. Nombre del tema / artista
-        </label>
-        <div className="flex gap-2 mb-4">
-          <input
-            id="song-title"
-            className="field"
-            placeholder="Ej: La Gota Fria - Carlos Vives"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-          />
-          <button className="btn btn-red whitespace-nowrap" onClick={openYouTubeSearch} type="button">
-            Buscar en YouTube
-          </button>
-        </div>
+            <form onSubmit={handleSubmit} className="grid gap-4">
+              <div>
+                <label className="field-label" htmlFor="song_name">
+                  1. Nombre de la cancion
+                </label>
+                <input
+                  id="song_name"
+                  className="field"
+                  placeholder="Ej: La Gota Fria"
+                  maxLength={150}
+                  value={form.song_name}
+                  onChange={(event) => update('song_name', event.target.value)}
+                  required
+                />
+              </div>
 
-        <label className="field-label" htmlFor="song-url">
-          2. Pega aqui el enlace copiado
-        </label>
-        <input
-          id="song-url"
-          className="field mb-3"
-          placeholder="https://www.youtube.com/watch?v=..."
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-        />
+              <div>
+                <label className="field-label" htmlFor="song_artist">
+                  2. Artista
+                </label>
+                <input
+                  id="song_artist"
+                  className="field"
+                  placeholder="Ej: Carlos Vives"
+                  maxLength={150}
+                  value={form.artist}
+                  onChange={(event) => update('artist', event.target.value)}
+                  required
+                />
+              </div>
 
-        {videoId && (
-          <div className="mb-4 border-[3px] border-bark rounded-2xl overflow-hidden">
-            <iframe
-              className="w-full aspect-video"
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title="Vista previa de la cancion"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
+              <div>
+                <label className="field-label" htmlFor="song_table_number">
+                  3. Numero de mesa
+                </label>
+                <input
+                  id="song_table_number"
+                  className="field"
+                  placeholder="Ej: 12"
+                  maxLength={20}
+                  value={form.table_number}
+                  onChange={(event) => update('table_number', event.target.value)}
+                  required
+                />
+              </div>
+
+              {error && (
+                <p className="text-sm font-bold text-tomato border-2 border-tomato bg-tomato/10 rounded-xl px-3 py-2">
+                  {error}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3 justify-end">
+                <button className="btn btn-ghost" onClick={close} type="button">
+                  Cancelar
+                </button>
+                <button className="btn btn-green" type="submit" disabled={sending}>
+                  {sending ? 'Enviando...' : 'Pedir esta cancion'}
+                </button>
+              </div>
+            </form>
+          </>
         )}
-
-        {error && (
-          <p className="mb-3 text-sm font-bold text-tomato border-2 border-tomato bg-tomato/10 rounded-xl px-3 py-2">
-            {error}
-          </p>
-        )}
-
-        <div className="flex flex-wrap gap-3 justify-end">
-          <button className="btn btn-ghost" onClick={onClose} type="button">
-            Cancelar
-          </button>
-          <button className="btn btn-green" onClick={handleAttach} type="button">
-            Adjuntar al saludo
-          </button>
-        </div>
       </div>
     </div>
   );

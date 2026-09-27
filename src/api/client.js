@@ -75,4 +75,16 @@ export const api = {
   createUser: (payload) => request('/users', { method: 'POST', auth: true, body: payload }),
   updateUser: (id, payload) => request(`/users/${id}`, { method: 'PATCH', auth: true, body: payload }),
   deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE', auth: true }),
+
+  createSongRequest: (payload) => request('/songs', { method: 'POST', body: payload }),
+  listSongRequests: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+    ).toString();
+    return request(`/songs${query ? `?${query}` : ''}`, { auth: true });
+  },
+  songStats: () => request('/songs/stats', { auth: true }),
+  setSongStatus: (id, status) =>
+    request(`/songs/${id}/status`, { method: 'PATCH', auth: true, body: { status } }),
+  deleteSongRequest: (id) => request(`/songs/${id}`, { method: 'DELETE', auth: true }),
 };

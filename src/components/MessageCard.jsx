@@ -11,17 +11,6 @@ function formatDate(value) {
   });
 }
 
-function songLabel(url) {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    const id = parsed.searchParams.get('v') || parsed.pathname.split('/').pop();
-    return id ? `YouTube · ${id}` : 'Cancion pedida';
-  } catch {
-    return 'Cancion pedida';
-  }
-}
-
 export default function MessageCard({
   message,
   variant = 'admin',
@@ -68,17 +57,6 @@ export default function MessageCard({
       <p className="text-ink leading-relaxed whitespace-pre-wrap bg-parchment/70 border-2 border-dashed border-bark/40 rounded-xl p-3">
         {message.message_text}
       </p>
-
-      {message.song_request_url && (
-        <a
-          href={message.song_request_url}
-          target="_blank"
-          rel="noreferrer"
-          className="text-sm font-extrabold text-pasture-dark underline decoration-spot decoration-4 underline-offset-4 break-all"
-        >
-          {songLabel(message.song_request_url)}
-        </a>
-      )}
 
       <div className="flex flex-wrap gap-2 mt-auto pt-1">
         {onSpeak && (

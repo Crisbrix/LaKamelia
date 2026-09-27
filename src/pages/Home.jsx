@@ -8,7 +8,6 @@ const EMPTY_FORM = {
   honoree_name: '',
   table_number: '',
   message_text: '',
-  song_request_url: '',
 };
 
 export default function Home() {
@@ -37,11 +36,6 @@ export default function Home() {
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
-  }
-
-  function attachSong({ url }) {
-    update('song_request_url', url);
-    setSongOpen(false);
   }
 
   async function handleSubmit(event) {
@@ -189,33 +183,20 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="bg-hay/60 border-2 border-dashed border-bark/50 rounded-2xl p-4">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div>
-                    <p className="field-label !mb-0">Cancion pedida (opcional)</p>
-                    <p className="text-sm text-bark-soft break-all">
-                      {form.song_request_url || 'Aun no has adjuntado ninguna cancion.'}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-green !py-1.5 !px-4 !text-sm"
-                      onClick={() => setSongOpen(true)}
-                    >
-                      Pedir una cancion
-                    </button>
-                    {form.song_request_url && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost !py-1.5 !px-4 !text-sm"
-                        onClick={() => update('song_request_url', '')}
-                      >
-                        Quitar
-                      </button>
-                    )}
-                  </div>
+              <div className="bg-hay/60 border-2 border-dashed border-bark/50 rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="field-label !mb-0">Quieres pedir una cancion?</p>
+                  <p className="text-sm text-bark-soft">
+                    Las canciones se piden aparte, con su propio formulario.
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  className="btn btn-green !py-1.5 !px-4 !text-sm"
+                  onClick={() => setSongOpen(true)}
+                >
+                  Pedir una cancion
+                </button>
               </div>
 
               {error && (
@@ -257,6 +238,17 @@ export default function Home() {
             </ol>
           </div>
 
+          <div className="card-rustic p-5 bg-spot/20 border-spot">
+            <h3 className="font-display text-xl text-bark mb-2">Pedir una cancion</h3>
+            <p className="text-sm text-bark-soft mb-4">
+              Formulario aparte del saludo: solo el nombre de la cancion, el artista y tu numero
+              de mesa. La cola la maneja el presentador.
+            </p>
+            <button className="btn btn-green w-full" type="button" onClick={() => setSongOpen(true)}>
+              Abrir formulario de canciones
+            </button>
+          </div>
+
           <div className="card-rustic p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display text-xl text-bark">Ya al aire</h3>
@@ -285,7 +277,7 @@ export default function Home() {
         </aside>
       </div>
 
-      <SongRequestModal open={songOpen} onClose={() => setSongOpen(false)} onAttach={attachSong} />
+      <SongRequestModal open={songOpen} onClose={() => setSongOpen(false)} />
     </div>
   );
 }
