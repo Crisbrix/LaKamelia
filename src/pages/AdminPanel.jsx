@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../api/client';
 import MessageCard from '../components/MessageCard';
 import UserManager from '../components/UserManager';
+import Segmented from '../ui/Segmented';
+import EmptyState from '../ui/EmptyState';
+import Button from '../ui/Button';
 
 const POLL_MS = 5000;
+
+const STAT_TONES = {
+  total: 'bg-white/[0.04] border-white/10',
+  pendiente: 'bg-spot/15 border-spot/40',
+  leido: 'bg-sky/15 border-sky/40',
+  high: 'bg-tomato/15 border-tomato/40',
+};
 
 export default function AdminPanel() {
   const [messages, setMessages] = useState([]);
@@ -83,35 +94,28 @@ export default function AdminPanel() {
           <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-bark-soft">
             Rancho Criadero La Kamelia · Orgullosamente colombiano
           </p>
-          <h1 className="font-display text-4xl text-bark">Panel de administracion</h1>
+          <h1 className="font-extrabold text-4xl text-bark">Panel de administracion</h1>
           <p className="text-bark-soft">
             Cola de mensajes del programa <strong>La Kamelia</strong>: asigna prioridades y
             controla el orden al aire.
           </p>
         </div>
-        <span className="text-xs font-display uppercase tracking-widest bg-spot border-2 border-ink rounded-full px-3 py-1">
+        <span className="text-xs font-extrabold uppercase tracking-widest bg-spot/15 text-spot border border-spot/40 rounded-full px-3 py-1">
           Rol: Administrador
         </span>
       </div>
 
       <nav className="flex flex-wrap gap-2 mb-6" aria-label="Secciones del panel">
-        {[
-          { id: 'mensajes', label: 'Cola de mensajes' },
-          { id: 'usuarios', label: 'Usuarios' },
-        ].map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setTab(item.id)}
-            className={`px-4 py-2 rounded-full font-extrabold text-sm uppercase tracking-wide border-2 transition ${
-              tab === item.id
-                ? 'bg-spot text-ink border-ink'
-                : 'bg-transparent text-bark-soft border-bark/40 hover:bg-hay'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+        <Segmented
+          id="admin-tabs"
+          options={[
+            { value: 'mensajes', label: 'Cola de mensajes' },
+            { value: 'usuarios', label: 'Usuarios' },
+          ]}
+          value={tab}
+          onChange={setTab}
+          ariaLabel="Secciones del panel"
+        />
       </nav>
 
       {tab === 'usuarios' ? (
@@ -119,91 +123,92 @@ export default function AdminPanel() {
       ) : (
         <>
           <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard label="Total" value={stats?.total ?? '—'} tone="bg-hay" />
-        <StatCard label="Pendientes" value={stats?.pendiente ?? '—'} tone="bg-spot" />
-        <StatCard label="Leidos" value={stats?.leido ?? '—'} tone="bg-sky" />
-        <StatCard
-          label="Prioridad alta"
-          value={stats?.byPriority?.[3] ?? '—'}
-          tone="bg-tomato text-white"
-        />
-      </section>
+            <StatCard label="Total" value={stats?.total ?? '—'} tone="total" />
+            <StatCard label="Pendientes" value={stats?.pendiente ?? '—'} tone="pendiente" />
+            <StatCard label="Leidos" value={stats?.leido ?? '—'} tone="leido" />
+            <StatCard label="Prioridad alta" value={stats?.byPriority?.[3] ?? '—'} tone="high" />
+          </section>
 
-      <section className="card-rustic p-4 mb-6">
-        <div className="grid md:grid-cols-3 gap-3">
-          <div>
-            <label className="field-label" htmlFor="status-filter">
-              Estado
-            </label>
-            <select
-              id="status-filter"
-              className="field"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="">Todos</option>
-              <option value="pendiente">Pendientes</option>
-              <option value="leido">Leidos</option>
-            </select>
-          </div>
+          <section className="card-rustic p-4 mb-6">
+            <div className="grid md:grid-cols-3 gap-3">
+              <div>
+                <label className="field-label" htmlFor="status-filter">
+                  Estado
+                </label>
+                <select
+                  id="status-filter"
+                  className="field"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <option value="">Todos</option>
+                  <option value="pendiente">Pendientes</option>
+                  <option value="leido">Leidos</option>
+                </select>
+              </div>
 
-          <div>
-            <label className="field-label" htmlFor="priority-filter">
-              Prioridad
-            </label>
-            <select
-              id="priority-filter"
-              className="field"
-              value={priorityFilter}
-              onChange={(event) => setPriorityFilter(event.target.value)}
-            >
-              <option value="">Todas</option>
-              <option value="3">3 · Alta</option>
-              <option value="2">2 · Media</option>
-              <option value="1">1 · Baja</option>
-            </select>
-          </div>
+              <div>
+                <label className="field-label" htmlFor="priority-filter">
+                  Prioridad
+                </label>
+                <select
+                  id="priority-filter"
+                  className="field"
+                  value={priorityFilter}
+                  onChange={(event) => setPriorityFilter(event.target.value)}
+                >
+                  <option value="">Todas</option>
+                  <option value="3">3 · Alta</option>
+                  <option value="2">2 · Media</option>
+                  <option value="1">1 · Baja</option>
+                </select>
+              </div>
 
-          <div>
-            <label className="field-label" htmlFor="search">
-              Buscar
-            </label>
-            <input
-              id="search"
-              className="field"
-              placeholder="Nombre o texto del saludo"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-        </div>
-      </section>
+              <div>
+                <label className="field-label" htmlFor="search">
+                  Buscar
+                </label>
+                <input
+                  id="search"
+                  className="field"
+                  placeholder="Nombre o texto del saludo"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </div>
+            </div>
+          </section>
 
-      {error && (
-        <p className="mb-4 text-sm font-bold text-tomato border-2 border-tomato bg-tomato/10 rounded-xl px-3 py-2">
-          {error}
-        </p>
-      )}
+          {error && (
+            <p className="mb-4 text-sm font-bold text-tomato border border-tomato/50 bg-tomato/10 rounded-xl px-3 py-2">
+              {error}
+            </p>
+          )}
 
-      {loading ? (
-        <p className="font-display text-bark text-xl">Cargando cola de mensajes...</p>
-      ) : messages.length === 0 ? (
-        <div className="card-rustic p-8 text-center text-bark-soft">
-          No hay mensajes con estos filtros.
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {messages.map((message) => (
-            <MessageCard
-              key={message.id}
-              message={message}
-              onPriorityChange={changePriority}
-              onToggleStatus={toggleStatus}
-              onDelete={remove}
-            />
-          ))}
-        </div>
-      )}
+          {loading ? (
+            <p className="font-extrabold text-bark text-xl">Cargando cola de mensajes...</p>
+          ) : messages.length === 0 ? (
+            <EmptyState icon="📬" title="Sin mensajes" hint="No hay mensajes con estos filtros." />
+          ) : (
+            <AnimatePresence initial={false} mode="popLayout">
+              <div
+                key={messages.length}
+                className="grid md:grid-cols-2 xl:grid-cols-3 gap-4"
+                style={{ minHeight: 200 }}
+              >
+                {messages.map((message) => (
+                  <motion.div key={message.id} layout initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ type: 'spring', stiffness: 280, damping: 26 }}>
+                    <MessageCard
+                      message={message}
+                      onPriorityChange={changePriority}
+                      onToggleStatus={toggleStatus}
+                      onDelete={remove}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </AnimatePresence>
+          )}
         </>
       )}
     </div>
@@ -211,10 +216,12 @@ export default function AdminPanel() {
 }
 
 function StatCard({ label, value, tone }) {
+  const toneClass = STAT_TONES[tone] || STAT_TONES.total;
+  const textClass = tone === 'high' ? 'text-tomato' : 'text-bark';
   return (
-    <div className={`card-rustic p-4 ${tone}`}>
-      <p className="font-display text-3xl leading-none">{value}</p>
-      <p className="text-xs font-extrabold uppercase tracking-wider mt-1">{label}</p>
+    <div className={`card-rustic p-4 ${toneClass}`}>
+      <p className={`font-extrabold text-3xl leading-none ${textClass}`}>{value}</p>
+      <p className="text-xs font-extrabold uppercase tracking-wider mt-1 text-bark-soft">{label}</p>
     </div>
   );
 }

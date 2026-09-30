@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../api/client';
 import PriorityBadge from '../components/PriorityBadge';
+import Ticks from '../ui/Ticks';
 import useSpeech from '../hooks/useSpeech';
+import Segmented from '../ui/Segmented';
+import Modal from '../ui/Modal';
+import Button from '../ui/Button';
+import EmptyState from '../ui/EmptyState';
 
 const POLL_MS = 3000;
 
@@ -15,6 +21,18 @@ function formatDate(value) {
     minute: '2-digit',
   });
 }
+
+const MSG_FILTERS = [
+  { value: 'pendiente', label: 'Pendientes' },
+  { value: 'leido', label: 'Leidos' },
+  { value: '', label: 'Todos' },
+];
+
+const SONG_FILTERS = [
+  { value: 'pendiente', label: 'Pendientes' },
+  { value: 'colocada', label: 'Colocadas' },
+  { value: '', label: 'Todas' },
+];
 
 export default function PresenterPanel() {
   const [messages, setMessages] = useState([]);
@@ -56,14 +74,6 @@ export default function PresenterPanel() {
   }, [load]);
 
   const openId = openMessage ? openMessage.id : null;
-
-  useEffect(() => {
-    function onKeyDown(event) {
-      if (event.key === 'Escape') setOpenMessage(null);
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
 
   async function markAsRead(message) {
     speech.stop();
@@ -117,24 +127,24 @@ export default function PresenterPanel() {
           <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-bark-soft">
             Rancho Criadero La Kamelia · Orgullosamente colombiano
           </p>
-          <h1 className="font-display text-4xl text-bark">Cabina del presentador</h1>
+          <h1 className="font-extrabold text-4xl text-bark">Cabina del presentador</h1>
           <p className="text-bark-soft">
             Cola en vivo del programa <strong>La Kamelia</strong>: saludos a la izquierda y
             canciones pedidas a la derecha.
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <span className="text-xs font-display uppercase tracking-widest bg-tomato text-white border-2 border-ink rounded-full px-3 py-1">
+          <span className="text-xs font-extrabold uppercase tracking-widest bg-tomato/15 text-tomato border border-tomato/40 rounded-full px-3 py-1">
             Al aire · {stats?.pendiente ?? 0} saludos
           </span>
-          <span className="text-xs font-display uppercase tracking-widest bg-spot text-ink border-2 border-ink rounded-full px-3 py-1">
+          <span className="text-xs font-extrabold uppercase tracking-widest bg-spot/15 text-spot border border-spot/40 rounded-full px-3 py-1">
             {songStats?.pendiente ?? 0} canciones
           </span>
         </div>
       </div>
 
       {error && (
-        <p className="mb-4 text-sm font-bold text-tomato border-2 border-tomato bg-tomato/10 rounded-xl px-3 py-2">
+        <p className="mb-4 text-sm font-bold text-tomato border border-tomato/50 bg-tomato/10 rounded-xl px-3 py-2">
           {error}
         </p>
       )}
@@ -144,101 +154,106 @@ export default function PresenterPanel() {
         {/* COLUMNA IZQUIERDA: MENSAJES DE SALUDOS */}
         <section className="card-rustic p-5">
           <div className="flex items-center gap-3 flex-wrap mb-4">
-            <h2 className="font-display text-2xl text-bark mr-auto">Mensajes de saludos</h2>
-            {['pendiente', 'leido', ''].map((value) => (
-              <button
-                key={value || 'todas'}
-                onClick={() => setStatusFilter(value)}
-                className={`px-3 py-1.5 rounded-full border-2 border-ink font-display text-xs uppercase ${
-                  statusFilter === value ? 'bg-spot text-ink' : 'bg-white text-bark'
-                }`}
-              >
-                {value === 'pendiente' ? 'Pendientes' : value === 'leido' ? 'Leidos' : 'Todos'}
-              </button>
-            ))}
+            <h2 className="font-extrabold text-2xl text-bark mr-auto">Mensajes de saludos</h2>
+            <Segmented
+              id="msg-filters"
+              options={MSG_FILTERS}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              ariaLabel="Filtrar saludos"
+            />
           </div>
 
           {loading ? (
-            <p className="font-display text-bark text-xl">Sincronizando con la cabina...</p>
+            <p className="font-extrabold text-bark text-xl">Sincronizando con la cabina...</p>
           ) : messages.length === 0 ? (
-            <div className="border-2 border-dashed border-bark/40 rounded-2xl p-6 text-center text-bark-soft">
-              No hay saludos {statusFilter ? `con estado "${statusFilter}"` : ''}.
-            </div>
+            <EmptyState icon="📭" title="Sin saludos" hint={`No hay saludos ${statusFilter ? `con estado "${statusFilter}"` : ''}.`} />
           ) : (
-            <ul className="grid gap-3 max-h-[65vh] overflow-y-auto pr-1">
-              {messages.map((message, index) => {
-                const isSelected = message.id === openId;
-                const isSpeaking = speech.speaking && speech.currentId === message.id;
-                return (
-                  <li key={message.id}>
-                    <button
-                      type="button"
-                      onClick={() => setOpenMessage(message)}
-                      className={`w-full text-left rounded-2xl border-2 p-3 transition ${
-                        isSelected
-                          ? 'border-ink bg-spot/30 shadow-[4px_4px_0_0_var(--color-ink)]'
-                          : 'border-bark/40 bg-parchment hover:border-ink hover:bg-hay'
-                      } ${message.status === 'leido' ? 'opacity-70' : ''} ${
-                        isSpeaking ? 'ring-4 ring-spot' : ''
-                      }`}
+            <AnimatePresence initial={false} mode="popLayout">
+              <ul
+                key={statusFilter}
+                className="grid gap-3 max-h-[65vh] overflow-y-auto pr-1"
+                style={{ minHeight: 200 }}
+              >
+                {messages.map((message, index) => {
+                  const isSelected = message.id === openId;
+                  const isSpeaking = speech.speaking && speech.currentId === message.id;
+                  return (
+                    <motion.li
+                      key={message.id}
+                      layout
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ delay: Math.min(index * 0.04, 0.3), type: 'spring', stiffness: 280, damping: 26 }}
                     >
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-display text-lg text-bark leading-tight">
-                          {message.honoree_name}
-                        </span>
-                        {message.table_number && (
-                          <span className="text-[10px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink bg-hay text-ink">
-                            Mesa {message.table_number}
+                      <button
+                        type="button"
+                        onClick={() => setOpenMessage(message)}
+                        className={`w-full text-left rounded-2xl border p-3 transition ${
+                          isSelected
+                            ? 'border-spot/60 bg-spot/15 ring-2 ring-spot/30'
+                            : 'border-white/10 bg-white/[0.03] hover:border-spot/40 hover:bg-white/5'
+                        } ${message.status === 'leido' ? 'opacity-70' : ''} ${
+                          isSpeaking ? 'ring-2 ring-spot/60' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-extrabold text-lg text-bark leading-tight">
+                            {message.honoree_name}
                           </span>
-                        )}
-                        <span className="ml-auto flex items-center gap-2">
-                          <PriorityBadge priority={message.priority} size="sm" />
-                          <span
-                            className={`text-[10px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink ${
-                              message.status === 'leido' ? 'bg-sky text-ink' : 'bg-white text-bark'
-                            }`}
-                          >
-                            {message.status === 'leido' ? 'Leido' : 'Pendiente'}
+                          {message.table_number && (
+                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border border-white/15 bg-white/[0.04] text-zinc-300">
+                              Mesa {message.table_number}
+                            </span>
+                          )}
+                          <span className="ml-auto flex items-center gap-2">
+                            <PriorityBadge priority={message.priority} size="sm" />
+                            <span
+                              className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                                message.status === 'leido'
+                                  ? 'border-sky/40 bg-sky/15 text-sky'
+                                  : 'border-white/15 bg-white/[0.04] text-zinc-200'
+                              }`}
+                            >
+                              {message.status === 'leido' ? 'Leido' : 'Pendiente'}
+                            </span>
                           </span>
-                        </span>
-                      </div>
-                      <p className="text-sm text-bark-soft mt-1">
-                        De {message.client_name} · {formatDate(message.created_at)}
-                      </p>
-                      <p className="text-sm text-ink mt-1 line-clamp-2">{message.message_text}</p>
-                      <div className="mt-2 flex items-center gap-2 flex-wrap">
-                        {nextUp && nextUp.id === message.id && message.status === 'pendiente' && (
-                          <span className="text-[10px] font-display uppercase px-2 py-0.5 rounded-full bg-tomato text-white border-2 border-ink">
-                            Siguiente al aire
+                        </div>
+                        <p className="text-sm text-bark-soft mt-1">
+                          De {message.client_name} · {formatDate(message.created_at)}
+                        </p>
+                        <p className="text-sm text-zinc-300 mt-1 line-clamp-2">{message.message_text}</p>
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          {nextUp && nextUp.id === message.id && message.status === 'pendiente' && (
+                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-tomato/15 text-tomato border border-tomato/40">
+                              Siguiente al aire
+                            </span>
+                          )}
+                          <span className="text-[10px] font-extrabold uppercase tracking-widest text-bark-soft">
+                            Clic para abrir
                           </span>
-                        )}
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-bark-soft">
-                          Clic para abrir en grande
-                        </span>
-                      </div>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                        </div>
+                      </button>
+                    </motion.li>
+                  );
+                })}
+              </ul>
+            </AnimatePresence>
           )}
         </section>
 
         {/* COLUMNA DERECHA: COLA DE CANCIONES PEDIDAS */}
         <section className="card-rustic p-5">
           <div className="flex items-center gap-3 flex-wrap mb-4">
-            <h2 className="font-display text-2xl text-bark mr-auto">Canciones pedidas</h2>
-            {['pendiente', 'colocada', ''].map((value) => (
-              <button
-                key={value || 'todas'}
-                onClick={() => setSongFilter(value)}
-                className={`px-3 py-1.5 rounded-full border-2 border-ink font-display text-xs uppercase ${
-                  songFilter === value ? 'bg-spot text-ink' : 'bg-white text-bark'
-                }`}
-              >
-                {value === 'pendiente' ? 'Pendientes' : value === 'colocada' ? 'Colocadas' : 'Todas'}
-              </button>
-            ))}
+            <h2 className="font-extrabold text-2xl text-bark mr-auto">Canciones pedidas</h2>
+            <Segmented
+              id="song-filters"
+              options={SONG_FILTERS}
+              value={songFilter}
+              onChange={setSongFilter}
+              ariaLabel="Filtrar canciones"
+            />
           </div>
 
           <p className="text-sm text-bark-soft mb-4">
@@ -246,54 +261,60 @@ export default function PresenterPanel() {
           </p>
 
           {songs.length === 0 ? (
-            <div className="border-2 border-dashed border-bark/40 rounded-2xl p-6 text-center text-bark-soft">
-              Nadie ha pedido canciones {songFilter ? `con estado "${songFilter}"` : ''}.
-            </div>
+            <EmptyState icon="🎵" title="Sin peticiones" hint={`Nadie ha pedido canciones ${songFilter ? `con estado "${songFilter}"` : ''}.`} />
           ) : (
-            <ul className="grid gap-3 max-h-[65vh] overflow-y-auto pr-1">
-              {songs.map((song) => (
-                <li
-                  key={song.id}
-                  className={`rounded-2xl border-2 border-bark/40 bg-parchment p-3 ${
-                    song.status === 'colocada' ? 'opacity-70' : ''
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div>
-                      <p className="font-display text-lg text-bark leading-tight">
-                        {song.song_name}
-                      </p>
-                      <p className="text-sm text-bark-soft">{song.artist}</p>
+            <AnimatePresence initial={false} mode="popLayout">
+              <ul
+                key={songFilter}
+                className="grid gap-3 max-h-[65vh] overflow-y-auto pr-1"
+                style={{ minHeight: 200 }}
+              >
+                {songs.map((song, index) => (
+                  <motion.li
+                    key={song.id}
+                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ delay: Math.min(index * 0.04, 0.3), type: 'spring', stiffness: 280, damping: 26 }}
+                    className={`rounded-2xl border p-3 ${song.status === 'colocada' ? 'opacity-70 border-white/10 bg-white/[0.02]' : 'border-white/10 bg-white/[0.03]'}`}
+                  >
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <p className="font-extrabold text-lg text-bark leading-tight">{song.song_name}</p>
+                        <p className="text-sm text-bark-soft">{song.artist}</p>
+                      </div>
+                      <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full border border-spot/40 bg-spot/15 text-spot">
+                        Mesa {song.table_number}
+                      </span>
                     </div>
-                    <span className="text-[11px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink bg-spot text-ink">
-                      Mesa {song.table_number}
-                    </span>
-                  </div>
 
-                  <div className="flex items-center gap-2 flex-wrap mt-3">
-                    <span
-                      className={`text-[10px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink ${
-                        song.status === 'colocada' ? 'bg-pasture text-white' : 'bg-white text-bark'
-                      }`}
-                    >
-                      {song.status === 'colocada' ? 'Colocada' : 'Pendiente'}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wide text-bark-soft font-bold">
-                      {formatDate(song.created_at)}
-                    </span>
-                    <button
-                      type="button"
-                      className={`btn !py-1 !px-3 !text-xs ml-auto ${
-                        song.status === 'pendiente' ? 'btn-green' : 'btn-ghost'
-                      }`}
-                      onClick={() => toggleSong(song)}
-                    >
-                      {song.status === 'pendiente' ? 'Marcar colocada' : 'Volver a pendiente'}
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                    <div className="flex items-center gap-2 flex-wrap mt-3">
+                      <span
+                        className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                          song.status === 'colocada'
+                            ? 'border-pasture/40 bg-pasture/15 text-pasture-dark'
+                            : 'border-white/15 bg-white/[0.04] text-zinc-200'
+                        }`}
+                      >
+                        {song.status === 'colocada' ? 'Colocada' : 'Pendiente'}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide text-bark-soft font-bold">
+                        {formatDate(song.created_at)}
+                      </span>
+                      <Button
+                        variant={song.status === 'pendiente' ? 'green' : 'ghost'}
+                        size="sm"
+                        className="ml-auto"
+                        onClick={() => toggleSong(song)}
+                      >
+                        {song.status === 'pendiente' ? 'Marcar colocada' : 'Volver a pendiente'}
+                      </Button>
+                    </div>
+                  </motion.li>
+                ))}
+              </ul>
+            </AnimatePresence>
           )}
         </section>
       </div>
@@ -302,28 +323,25 @@ export default function PresenterPanel() {
       <section className="card-rustic p-5 mt-6">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
           <div>
-            <h2 className="font-display text-2xl text-bark">Lectura por IA / voz robotizada</h2>
+            <h2 className="font-extrabold text-2xl text-bark">Lectura por IA / voz robotizada</h2>
             <p className="text-sm text-bark-soft">
-              Motor <code className="bg-hay px-1 rounded">window.speechSynthesis</code> con{' '}
+              Motor <code className="bg-white/[0.04] px-1 rounded border border-white/10">window.speechSynthesis</code> con{' '}
               <strong>lang es-ES</strong> (castellano de España) y voz{' '}
               <strong>es-CO Bogotá, Colombia</strong> cuando el navegador la tenga disponible.
             </p>
           </div>
           <div className="flex gap-2">
-            <button
-              className={`btn !py-1.5 !px-4 !text-sm ${speech.robotMode ? 'btn-red' : 'btn-ghost'}`}
+            <Button
+              variant={speech.robotMode ? 'red' : 'ghost'}
+              size="sm"
               onClick={() => speech.setRobotMode((value) => !value)}
               title="Activa tono de locutor robotico"
             >
               Tono {speech.robotMode ? 'robotico' : 'natural'}
-            </button>
-            <button
-              className="btn btn-red !py-1.5 !px-4 !text-sm"
-              onClick={speech.stop}
-              disabled={!speech.speaking}
-            >
+            </Button>
+            <Button variant="red" size="sm" onClick={speech.stop} disabled={!speech.speaking}>
               Detener lectura
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -334,7 +352,7 @@ export default function PresenterPanel() {
         ) : (
           <>
             {speech.ready && !speech.hasSpanishVoice && (
-              <p className="mb-3 text-sm font-bold text-bark border-2 border-spot bg-spot/20 rounded-xl px-3 py-2">
+              <p className="mb-3 text-sm font-bold text-bark border border-spot/40 bg-spot/10 rounded-xl px-3 py-2">
                 Este equipo no tiene voces en espanol (es-ES / es-CO Bogotá) instaladas: se leera
                 con la voz del sistema en lang es-ES. Activa el tono robotico para el efecto de
                 locutor.
@@ -400,79 +418,70 @@ export default function PresenterPanel() {
         )}
       </section>
 
-      {/* RECUADRO GRANDE DEL MENSAJE SELECCIONADO */}
-      {openMessage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/75 p-4"
-          onClick={() => setOpenMessage(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="card-rustic w-full max-w-3xl p-6 md:p-8 animate-pop max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-bark-soft">
-                  Saludo en cabina
-                </p>
-                <h2 className="font-display text-3xl md:text-4xl text-bark leading-tight">
-                  {openMessage.honoree_name}
-                </h2>
-                <p className="text-sm uppercase tracking-wide text-bark-soft font-bold mt-1">
-                  De {openMessage.client_name}
-                  {openMessage.table_number ? ` · Mesa ${openMessage.table_number}` : ''} ·{' '}
-                  {formatDate(openMessage.created_at)}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <PriorityBadge priority={openMessage.priority} />
-                <span
-                  className={`text-[11px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink ${
-                    openMessage.status === 'leido' ? 'bg-sky text-ink' : 'bg-white text-bark'
-                  }`}
-                >
-                  {openMessage.status === 'leido' ? 'Leido' : 'Pendiente'}
-                </span>
-              </div>
+      {/* RECUADRO GRANDE DEL MENSAJE SELECCIONADO - usando Modal */}
+      <Modal
+        open={!!openMessage}
+        onClose={() => setOpenMessage(null)}
+        labelledBy="reading-title"
+        size="lg"
+      >
+        <div>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-bark-soft">
+                Saludo en cabina
+              </p>
+              <h2 id="reading-title" className="font-extrabold text-3xl md:text-4xl text-bark leading-tight">
+                {openMessage.honoree_name}
+              </h2>
+              <p className="text-sm uppercase tracking-wide text-bark-soft font-bold mt-1">
+                De {openMessage.client_name}
+                {openMessage.table_number ? ` · Mesa ${openMessage.table_number}` : ''} ·{' '}
+                {formatDate(openMessage.created_at)}
+              </p>
             </div>
-
-            <p className="mt-5 text-xl md:text-2xl leading-relaxed whitespace-pre-wrap bg-parchment/70 border-2 border-dashed border-bark/40 rounded-2xl p-5">
-              {openMessage.message_text}
-            </p>
-
-            <div className="flex flex-wrap gap-3 mt-5">
-              <button
-                className="btn btn-primary !text-lg"
-                onClick={() => handleSpeak(openMessage)}
-                disabled={!speech.supported}
+            <div className="flex items-center gap-2">
+              <PriorityBadge priority={openMessage.priority} />
+              <span
+                className={`text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                  openMessage.status === 'leido'
+                    ? 'border-sky/40 bg-sky/15 text-sky'
+                    : 'border-white/15 bg-white/[0.04] text-zinc-200'
+                }`}
               >
-                {speech.speaking && speech.currentId === openMessage.id
-                  ? 'Leyendo ahora...'
-                  : 'Leer con voz IA'}
-              </button>
-              {openMessage.status === 'pendiente' ? (
-                <button className="btn btn-green !text-lg" onClick={() => markAsRead(openMessage)}>
-                  Marcar como leido
-                </button>
-              ) : (
-                <button className="btn btn-ghost !text-lg" onClick={() => reopen(openMessage)}>
-                  Volver a pendiente
-                </button>
-              )}
-              <button className="btn btn-ghost !text-lg ml-auto" onClick={() => setOpenMessage(null)}>
-                Cerrar
-              </button>
+                {openMessage.status === 'leido' ? 'Leido' : 'Pendiente'}
+              </span>
             </div>
-
-            <p className="text-xs text-bark-soft mt-4">
-              Voz: <strong>es-ES</strong> (castellano de España) adaptada a{' '}
-              <strong>es-CO · Bogotá</strong>. Cierra con la tecla Esc.
-            </p>
           </div>
+
+          <p className="mt-5 text-xl md:text-2xl leading-relaxed whitespace-pre-wrap bg-white/[0.03] border border-dashed border-white/10 rounded-2xl p-5">
+            {openMessage.message_text}
+          </p>
+
+          <div className="flex flex-wrap gap-3 mt-5">
+            <Button variant="primary" size="lg" onClick={() => handleSpeak(openMessage)} disabled={!speech.supported}>
+              {speech.speaking && speech.currentId === openMessage.id ? 'Leyendo ahora...' : 'Leer con voz IA'}
+            </Button>
+            {openMessage.status === 'pendiente' ? (
+              <Button variant="green" size="lg" onClick={() => markAsRead(openMessage)}>
+                Marcar como leido
+              </Button>
+            ) : (
+              <Button variant="ghost" size="lg" onClick={() => reopen(openMessage)}>
+                Volver a pendiente
+              </Button>
+            )}
+            <Button variant="ghost" size="lg" className="ml-auto" onClick={() => setOpenMessage(null)}>
+              Cerrar
+            </Button>
+          </div>
+
+          <p className="text-xs text-bark-soft mt-4">
+            Voz: <strong>es-ES</strong> (castellano de España) adaptada a{' '}
+            <strong>es-CO · Bogotá</strong>. Cierra con la tecla Esc.
+          </p>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

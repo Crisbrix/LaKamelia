@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../api/client';
 import logoDark from '../imagenes/kamelia-dark.png';
 import SongRequestModal from '../components/SongRequestModal';
+import Button from '../ui/Button';
 
 const EMPTY_FORM = {
   client_name: '',
@@ -59,9 +61,14 @@ export default function Home() {
       {/* HERO */}
       <section className="card-rustic p-6 md:p-10 mb-8 relative overflow-hidden">
         <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-spot/30" />
-        <div className="flex flex-col md:flex-row items-center gap-6 relative">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 24 }}
+          className="flex flex-col md:flex-row items-center gap-6 relative"
+        >
           <div className="flex-1">
-            <span className="inline-flex items-center gap-2 text-xs font-display uppercase tracking-[0.2em] bg-tomato text-white border-2 border-ink rounded-full px-3 py-1">
+            <span className="inline-flex items-center gap-2 text-xs font-display uppercase tracking-[0.2em] bg-tomato text-white border border-white/15 rounded-full px-3 py-1">
               <span className="w-2 h-2 rounded-full bg-white animate-pulse" /> Al aire ahora
             </span>
             <p className="mt-3 text-xs md:text-sm font-extrabold uppercase tracking-[0.25em] text-bark-soft">
@@ -78,48 +85,62 @@ export default function Home() {
               pedimos la cancion que elijas.
             </p>
             <div className="flex flex-wrap gap-3 mt-5">
-              <a href="#enviar" className="btn btn-primary">
+              <Button variant="primary" onClick={() => document.getElementById('enviar')?.scrollIntoView({ behavior: 'smooth' })}>
                 Enviar saludo gratis
-              </a>
-              <button className="btn btn-green" onClick={() => setSongOpen(true)} type="button">
+              </Button>
+              <Button variant="green" onClick={() => setSongOpen(true)}>
                 Pedir una cancion
-              </button>
+              </Button>
             </div>
           </div>
-          <div className="animate-floaty">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.15 }}
+            className="animate-floaty"
+          >
             <img
               src={logoDark}
               alt="La Kamelia"
               className="w-40 h-40 md:w-52 md:h-52 object-contain"
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* FORMULARIO */}
         <section id="enviar" className="lg:col-span-2 card-rustic p-6 md:p-8 scroll-mt-24">
-          <h2 className="font-display text-2xl text-bark mb-1">
+          <h2 className="text-2xl font-extrabold text-bark mb-1">
             Formulario de complacencias · La Kamelia
           </h2>
           <p className="text-sm text-bark-soft mb-5">
             No necesitas registro ni contrasena. Solo tus datos y el saludo.
           </p>
 
-          {sent ? (
-            <div className="animate-pop border-[3px] border-pasture bg-pasture/10 rounded-2xl p-6 text-center">
-              <p className="font-display text-2xl text-pasture-dark">Saludo enviado a la cabina</p>
-              <p className="mt-2 text-bark">
-                <strong>{sent.honoree_name}</strong> ya esta en la cola de mensajes.
-              </p>
-              <p className="text-sm text-bark-soft mt-1">
-                Mesa {sent.table_number} · Pronto podras escucharlo al aire. Gracias por escribirnos.
-              </p>
-              <button className="btn btn-primary mt-4" onClick={() => setSent(null)}>
-                Enviar otro saludo
-              </button>
-            </div>
-          ) : (
+          <AnimatePresence mode="wait" initial={false}>
+            {sent ? (
+              <motion.div
+                key="sent"
+                initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                className="border-2 border-pasture/60 bg-pasture/10 rounded-2xl p-6 text-center"
+              >
+                <p className="text-2xl font-extrabold text-pasture-dark">Saludo enviado a la cabina</p>
+                <p className="mt-2 text-bark">
+                  <strong>{sent.honoree_name}</strong> ya esta en la cola de mensajes.
+                </p>
+                <p className="text-sm text-bark-soft mt-1">
+                  Mesa {sent.table_number} · Pronto podras escucharlo al aire. Gracias por
+                  escribirnos.
+                </p>
+                <Button variant="primary" className="mt-4" onClick={() => setSent(null)}>
+                  Enviar otro saludo
+                </Button>
+              </motion.div>
+            ) : (
             <form onSubmit={handleSubmit} className="grid gap-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -183,7 +204,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="bg-hay/60 border-2 border-dashed border-bark/50 rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
+              <div className="bg-white/[0.04] border border-dashed border-white/15 rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   <p className="field-label !mb-0">Quieres pedir una cancion?</p>
                   <p className="text-sm text-bark-soft">
@@ -205,32 +226,33 @@ export default function Home() {
                 </p>
               )}
 
-              <button className="btn btn-primary w-full !text-lg" disabled={sending}>
+              <Button type="submit" variant="primary" className="w-full !text-lg" disabled={sending}>
                 {sending ? 'Enviando a la cabina...' : 'Enviar saludo al aire'}
-              </button>
+              </Button>
             </form>
           )}
+          </AnimatePresence>
         </section>
 
         {/* LATERAL */}
         <aside className="grid gap-6 content-start">
           <div className="card-rustic p-5">
-            <h3 className="font-display text-xl text-bark mb-3">Como funciona</h3>
+            <h3 className="text-xl font-extrabold text-bark mb-3">Como funciona</h3>
             <ol className="grid gap-3 text-sm text-bark">
               <li className="flex gap-3">
-                <span className="w-7 h-7 shrink-0 grid place-items-center rounded-full bg-spot border-2 border-ink font-display">
+                <span className="w-7 h-7 shrink-0 grid place-items-center rounded-full bg-spot border border-spot/40 text-[#131316] font-extrabold">
                   1
                 </span>
                 Escribes tu saludo y el homenajeado, sin registrarte.
               </li>
               <li className="flex gap-3">
-                <span className="w-7 h-7 shrink-0 grid place-items-center rounded-full bg-spot border-2 border-ink font-display">
+                <span className="w-7 h-7 shrink-0 grid place-items-center rounded-full bg-spot border border-spot/40 text-[#131316] font-extrabold">
                   2
                 </span>
                 El administrador le asigna prioridad en la cola.
               </li>
               <li className="flex gap-3">
-                <span className="w-7 h-7 shrink-0 grid place-items-center rounded-full bg-spot border-2 border-ink font-display">
+                <span className="w-7 h-7 shrink-0 grid place-items-center rounded-full bg-spot border border-spot/40 text-[#131316] font-extrabold">
                   3
                 </span>
                 El presentador lo lee al aire, con voz IA si lo desea.
@@ -238,8 +260,8 @@ export default function Home() {
             </ol>
           </div>
 
-          <div className="card-rustic p-5 bg-spot/20 border-spot">
-            <h3 className="font-display text-xl text-bark mb-2">Pedir una cancion</h3>
+          <div className="card-rustic p-5 bg-spot/10 border-spot/40">
+            <h3 className="text-xl font-extrabold text-bark mb-2">Pedir una cancion</h3>
             <p className="text-sm text-bark-soft mb-4">
               Formulario aparte del saludo: solo el nombre de la cancion, el artista y tu numero
               de mesa. La cola la maneja el presentador.
@@ -251,7 +273,7 @@ export default function Home() {
 
           <div className="card-rustic p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-display text-xl text-bark">Ya al aire</h3>
+              <h3 className="text-xl font-extrabold text-bark">Ya al aire</h3>
               <span className="text-xs font-bold uppercase text-bark-soft">Actualiza solo</span>
             </div>
 
@@ -262,8 +284,8 @@ export default function Home() {
             ) : (
               <ul className="grid gap-3">
                 {recent.map((item) => (
-                  <li key={item.id} className="border-2 border-bark/40 rounded-xl p-3 bg-parchment">
-                    <p className="font-display text-bark">{item.honoree_name}</p>
+                  <li key={item.id} className="border border-white/10 rounded-xl p-3 bg-white/[0.03]">
+                    <p className="font-extrabold text-bark">{item.honoree_name}</p>
                     <p className="text-xs text-bark-soft">
                       De {item.client_name}
                       {item.table_number ? ` · Mesa ${item.table_number}` : ''}

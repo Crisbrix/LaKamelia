@@ -61,8 +61,8 @@ export default function App() {
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      <footer className="wood-panel border-t-4 border-ink mt-10">
-        <div className="max-w-6xl mx-auto px-4 py-5 text-center text-parchment text-sm">
+      <footer className="wood-panel border-t border-white/10 mt-10">
+        <div className="max-w-6xl mx-auto px-4 py-5 text-center text-zinc-100 text-sm">
           <p className="font-display text-lg">Rancho Criadero La Kamelia</p>
           <p className="text-spot text-xs uppercase tracking-[0.25em] font-bold">
             Programa radial La Kamelia · Orgullosamente colombiano

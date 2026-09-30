@@ -25,12 +25,12 @@ export default function MessageCard({
   return (
     <article
       className={`card-rustic p-4 flex flex-col gap-3 ${
-        isRead ? 'opacity-70 bg-hay/40' : ''
-      } ${isSpeaking ? 'ring-4 ring-spot' : ''}`}
+        isRead ? 'opacity-70 bg-white/[0.02]' : ''
+      } ${isSpeaking ? 'ring-2 ring-spot/60' : ''}`}
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <p className="font-display text-lg text-bark leading-tight">
+          <p className="font-extrabold text-lg text-bark leading-tight">
             Para: {message.honoree_name}
           </p>
           <p className="text-xs uppercase tracking-wide text-bark-soft font-bold">
@@ -39,14 +39,16 @@ export default function MessageCard({
         </div>
         <div className="flex items-center gap-2">
           {message.table_number && (
-            <span className="text-[11px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink bg-hay text-ink">
+            <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full border border-white/15 bg-white/[0.04] text-zinc-300">
               Mesa {message.table_number}
             </span>
           )}
           <PriorityBadge priority={message.priority} size="sm" />
           <span
-            className={`text-[11px] font-display uppercase px-2 py-0.5 rounded-full border-2 border-ink ${
-              isRead ? 'bg-sky text-ink' : 'bg-white text-bark'
+            className={`text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+              isRead
+                ? 'border-sky/40 bg-sky/15 text-sky'
+                : 'border-white/15 bg-white/[0.04] text-zinc-200'
             }`}
           >
             {isRead ? 'Leido' : 'Pendiente'}
@@ -54,7 +56,7 @@ export default function MessageCard({
         </div>
       </div>
 
-      <p className="text-ink leading-relaxed whitespace-pre-wrap bg-parchment/70 border-2 border-dashed border-bark/40 rounded-xl p-3">
+      <p className="text-zinc-100 leading-relaxed whitespace-pre-wrap bg-white/[0.03] border border-dashed border-white/10 rounded-xl p-3">
         {message.message_text}
       </p>
 
@@ -81,14 +83,14 @@ export default function MessageCard({
                 key={level}
                 onClick={() => onPriorityChange(message, level)}
                 title={`Prioridad ${level}`}
-                className={`w-8 h-8 rounded-full border-2 border-ink font-display text-sm transition ${
+                className={`w-8 h-8 rounded-full border border-white/15 font-extrabold text-sm transition ${
                   message.priority === level
                     ? level === 3
                       ? 'bg-tomato text-white'
                       : level === 2
-                        ? 'bg-spot text-ink'
-                        : 'bg-pasture text-white'
-                    : 'bg-white text-bark-soft hover:bg-hay'
+                        ? 'bg-spot text-[#131316]'
+                        : 'bg-pasture text-[#06120a]'
+                    : 'bg-white/[0.04] text-zinc-400 hover:bg-white/10'
                 }`}
               >
                 {level}

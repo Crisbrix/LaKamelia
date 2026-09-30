@@ -10,7 +10,7 @@ export default function LoadingScreen() {
       />
 
       <div>
-        <p className="font-display text-4xl md:text-5xl text-parchment">La Kamelia</p>
+        <p className="font-display text-4xl md:text-5xl text-zinc-100">La Kamelia</p>
         <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-spot mt-2">
           Rancho Criadero La Kamelia
         </p>
@@ -31,7 +31,7 @@ export default function LoadingScreen() {
         />
       </div>
 
-      <p className="text-xs font-bold uppercase tracking-[0.25em] text-parchment/80">
+      <p className="text-xs font-bold uppercase tracking-[0.25em] text-zinc-300/80">
         Encendiendo el estudio...
       </p>
 
