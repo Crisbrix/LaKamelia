@@ -419,69 +419,71 @@ export default function PresenterPanel() {
       </section>
 
       {/* RECUADRO GRANDE DEL MENSAJE SELECCIONADO - usando Modal */}
-      <Modal
-        open={!!openMessage}
-        onClose={() => setOpenMessage(null)}
-        labelledBy="reading-title"
-        size="lg"
-      >
-        <div>
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-bark-soft">
-                Saludo en cabina
-              </p>
-              <h2 id="reading-title" className="font-extrabold text-3xl md:text-4xl text-bark leading-tight">
-                {openMessage.honoree_name}
-              </h2>
-              <p className="text-sm uppercase tracking-wide text-bark-soft font-bold mt-1">
-                De {openMessage.client_name}
-                {openMessage.table_number ? ` · Mesa ${openMessage.table_number}` : ''} ·{' '}
-                {formatDate(openMessage.created_at)}
-              </p>
+      {openMessage && (
+        <Modal
+          open={true}
+          onClose={() => setOpenMessage(null)}
+          labelledBy="reading-title"
+          size="lg"
+        >
+          <div>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-bark-soft">
+                  Saludo en cabina
+                </p>
+                <h2 id="reading-title" className="font-extrabold text-3xl md:text-4xl text-bark leading-tight">
+                  {openMessage.honoree_name}
+                </h2>
+                <p className="text-sm uppercase tracking-wide text-bark-soft font-bold mt-1">
+                  De {openMessage.client_name}
+                  {openMessage.table_number ? ` · Mesa ${openMessage.table_number}` : ''} ·{' '}
+                  {formatDate(openMessage.created_at)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <PriorityBadge priority={openMessage.priority} />
+                <span
+                  className={`text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                    openMessage.status === 'leido'
+                      ? 'border-sky/40 bg-sky/15 text-sky'
+                      : 'border-white/15 bg-white/[0.04] text-zinc-200'
+                  }`}
+                >
+                  {openMessage.status === 'leido' ? 'Leido' : 'Pendiente'}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <PriorityBadge priority={openMessage.priority} />
-              <span
-                className={`text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
-                  openMessage.status === 'leido'
-                    ? 'border-sky/40 bg-sky/15 text-sky'
-                    : 'border-white/15 bg-white/[0.04] text-zinc-200'
-                }`}
-              >
-                {openMessage.status === 'leido' ? 'Leido' : 'Pendiente'}
-              </span>
+
+            <p className="mt-5 text-xl md:text-2xl leading-relaxed whitespace-pre-wrap bg-white/[0.03] border border-dashed border-white/10 rounded-2xl p-5">
+              {openMessage.message_text}
+            </p>
+
+            <div className="flex flex-wrap gap-3 mt-5">
+              <Button variant="primary" size="lg" onClick={() => handleSpeak(openMessage)} disabled={!speech.supported}>
+                {speech.speaking && speech.currentId === openMessage.id ? 'Leyendo ahora...' : 'Leer con voz IA'}
+              </Button>
+              {openMessage.status === 'pendiente' ? (
+                <Button variant="green" size="lg" onClick={() => markAsRead(openMessage)}>
+                  Marcar como leido
+                </Button>
+              ) : (
+                <Button variant="ghost" size="lg" onClick={() => reopen(openMessage)}>
+                  Volver a pendiente
+                </Button>
+              )}
+              <Button variant="ghost" size="lg" className="ml-auto" onClick={() => setOpenMessage(null)}>
+                Cerrar
+              </Button>
             </div>
+
+            <p className="text-xs text-bark-soft mt-4">
+              Voz: <strong>es-ES</strong> (castellano de España) adaptada a{' '}
+              <strong>es-CO · Bogotá</strong>. Cierra con la tecla Esc.
+            </p>
           </div>
-
-          <p className="mt-5 text-xl md:text-2xl leading-relaxed whitespace-pre-wrap bg-white/[0.03] border border-dashed border-white/10 rounded-2xl p-5">
-            {openMessage.message_text}
-          </p>
-
-          <div className="flex flex-wrap gap-3 mt-5">
-            <Button variant="primary" size="lg" onClick={() => handleSpeak(openMessage)} disabled={!speech.supported}>
-              {speech.speaking && speech.currentId === openMessage.id ? 'Leyendo ahora...' : 'Leer con voz IA'}
-            </Button>
-            {openMessage.status === 'pendiente' ? (
-              <Button variant="green" size="lg" onClick={() => markAsRead(openMessage)}>
-                Marcar como leido
-              </Button>
-            ) : (
-              <Button variant="ghost" size="lg" onClick={() => reopen(openMessage)}>
-                Volver a pendiente
-              </Button>
-            )}
-            <Button variant="ghost" size="lg" className="ml-auto" onClick={() => setOpenMessage(null)}>
-              Cerrar
-            </Button>
-          </div>
-
-          <p className="text-xs text-bark-soft mt-4">
-            Voz: <strong>es-ES</strong> (castellano de España) adaptada a{' '}
-            <strong>es-CO · Bogotá</strong>. Cierra con la tecla Esc.
-          </p>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
 }
